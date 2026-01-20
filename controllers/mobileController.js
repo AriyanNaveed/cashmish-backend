@@ -32,6 +32,25 @@ export const getMobileById = async (req, res) => {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 }
+//get a mobile phone by brand and model
+export const getMobilesByBrand = async (req, res) => {
+  try {
+    const { brand } = req.query;
+
+    if (!brand) {
+      return res.status(400).json({ message: "Brand is required" });
+    }
+
+    const mobiles = await Mobile.find({
+      brand,
+      isActive: true
+    });
+
+    res.json(mobiles);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch mobiles" });
+  }
+};
 //Update a mobile phone
 export const updateMobile = async (req, res) => {
     try {
