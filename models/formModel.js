@@ -1,44 +1,58 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const fromSchema = new mongoose.Schema({
-     title:{
-        type:String,
-        required:true
-     },
-        description:{
-        type:String,
-        required:true
-     },
-        userId:{
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'User',
-        required:true
-     },
-       images:{
-        type:String
-     },
-     brand:{
-         type:String,
-         enum:['Apple','Samsung'],
-         required:true
-     },
-        phoneModel:{
-        type:String,
-        required:true
-     },
-       condition:{
-        type:String,
-        enum:['new','like new','used','refurbished'],
-        required:true
-       },
-       storage:{
-        type:String,
-        Enum:['32GB','64GB','128GB','256GB','512GB','1TB'],
-        required:true
-       }
+const formSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
 
-        
-},{timestamps:true});
+    mobileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Mobile",
+      required: true
+    },
 
+    storage: {
+      type: String,
+      enum: ["32GB", "64GB", "128GB", "256GB", "512GB", "1TB"],
+      required: true
+    },
 
-export const Form = mongoose.model('Form', fromSchema);
+    screenCondition: {
+      type: String,
+      enum: ["perfect", "scratched", "cracked"],
+      required: true
+    },
+
+    bodyCondition: {
+      type: String,
+      enum: ["perfect", "scratched", "damaged"],
+      required: true
+    },
+
+    batteryCondition: {
+      type: String,
+      enum: ["good", "average", "poor"],
+      required: true
+    },
+
+    images: {
+      type: [String],
+      required: true
+    },
+
+    estimatedPrice: {
+      type: Number
+    },
+
+    status: {
+      type: String,
+      default: "pending"
+    }
+  },
+  { timestamps: true }
+);
+
+export const Form = mongoose.model("Form", formSchema);

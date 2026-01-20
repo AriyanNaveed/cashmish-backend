@@ -7,6 +7,7 @@ import bodyParser from 'body-parser';
 import authRoutes from './routes/authRoutes.js';
 import passportConfig from './config/passport.js';
 import mobileRoutes from './routes/mobileRoute.js';
+import formRoutes from './routes/formRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -25,8 +26,9 @@ app.get('/', (req, res) => {
 //routes
 app.use("/api/auth", authRoutes);
 app.use("/api/mobiles", mobileRoutes);
+app.use("/api/forms", formRoutes);
 
-
+//connect to database and start server
 connectDB();
 
 app.listen(PORT, () => {
