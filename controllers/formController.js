@@ -1,5 +1,5 @@
-import Form from "../models/formModel.js";
-import Mobile from "../models/mobileModel.js";
+import { Form } from "../models/formModel.js";
+import { Mobile } from "../models/mobileModel.js";
 import cloudinary from "../config/cloudinary.js";
 import { calculatePrice } from "../utils/priceCalculator.js";
 
