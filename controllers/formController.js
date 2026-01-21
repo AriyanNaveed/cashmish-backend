@@ -3,9 +3,9 @@ import { Mobile } from "../models/mobileModel.js";
 import cloudinary from "../config/cloudinary.js";
 import { calculatePrice } from "../utils/priceCalculator.js";
 
-/* ===============================
-   CREATE FORM (USER SUBMIT)
-================================ */
+
+// CREATE FORM (USER SUBMIT)
+
 export const createForm = async (req, res) => {
   try {
     const {
@@ -54,9 +54,9 @@ export const createForm = async (req, res) => {
   }
 };
 
-/* ===============================
-   GET USER FORMS (USER DASHBOARD)
-================================ */
+
+// GET USER FORMS (USER DASHBOARD)
+
 export const getMyForms = async (req, res) => {
   try {
     const forms = await Form.find({ userId: req.user.id })
@@ -69,9 +69,7 @@ export const getMyForms = async (req, res) => {
   }
 };
 
-/* ===============================
-   GET SINGLE FORM
-================================ */
+// GET SINGLE FORM
 export const getFormById = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id)
@@ -93,9 +91,7 @@ export const getFormById = async (req, res) => {
   }
 };
 
-/* ===============================
-   UPDATE FORM (USER – LIMITED)
-================================ */
+// UPDATE FORM (USER – LIMITED)
 export const updateForm = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id);
@@ -124,9 +120,8 @@ export const updateForm = async (req, res) => {
   }
 };
 
-/* ===============================
-   DELETE FORM (USER)
-================================ */
+
+// DELETE FORM (USER)
 export const deleteForm = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id);
@@ -146,9 +141,7 @@ export const deleteForm = async (req, res) => {
   }
 };
 
-/* ===============================
-   ADMIN – GET ALL FORMS
-================================ */
+// ADMIN – GET ALL FORMS
 export const getAllForms = async (req, res) => {
   try {
     const forms = await Form.find()
@@ -162,9 +155,7 @@ export const getAllForms = async (req, res) => {
   }
 };
 
-/* ===============================
-   ADMIN – UPDATE STATUS / FINAL PRICE
-================================ */
+// ADMIN – UPDATE STATUS / FINAL PRICE
 export const adminUpdateForm = async (req, res) => {
   try {
     const { status, estimatedPrice } = req.body;
