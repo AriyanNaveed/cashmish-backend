@@ -1,26 +1,49 @@
 import express from "express";
-import upload from "../middleware/upload.js";
 import {
   createForm,
-  getMyForms,
+  getAllForms,
   getFormById,
   updateForm,
-  deleteForm,
-  getAllForms,
-  adminUpdateForm
+  deleteForm
 } from "../controllers/formController.js";
+
+import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
-/* USER */
-router.post("/", upload.array("images", 5), createForm);
-router.get("/my", getMyForms);
-router.get("/:id", getFormById);
-router.put("/:id", updateForm);
-router.delete("/:id", deleteForm);
+/* =========================
+   ROUTES
+========================= */
 
-/* ADMIN */
-router.get("/", getAllForms);
-router.put("/admin/:id", adminUpdateForm);
+// create form
+router.post(
+  "/",
+  upload.array("images", 5),
+  createForm
+);
+
+// get all forms
+router.get(
+  "/",
+  getAllForms
+);
+
+// get single form
+router.get(
+  "/:id",
+  getFormById
+);
+
+// update form
+router.put(
+  "/:id",
+  updateForm
+);
+
+// delete form
+router.delete(
+  "/:id",
+  deleteForm
+);
 
 export default router;
