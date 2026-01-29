@@ -19,7 +19,11 @@ const formSchema = new mongoose.Schema(
       enum: ["32GB", "64GB", "128GB", "256GB", "512GB", "1TB"],
       required: true
     },
-
+     
+    carier: {
+      type: String,
+      required: true
+    },
     screenCondition: {
       type: String,
       enum: ["perfect", "scratched", "cracked"],
