@@ -2,80 +2,100 @@ import mongoose from "mongoose";
 
 const formSchema = new mongoose.Schema(
   {
-    userName: {
-      type: String,
-      required: true,
-      trim: true
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
-    phoneNumber: {
-      type: String,
-      required: true,
-      trim: true
+    pickUpDetails: {
+      fullName: {
+        type: String,
+        required: true,
+      },
+      phoneNumber: {
+        type: String,
+        required: true,
+      },
+      address: {
+        addressText: {
+          type: String,
+          required: true,
+        },
+        location: {
+          type: {
+            type: String,
+            enum: ["Point"],
+            default: "Point",
+          },
+          coordinates: {
+            type: [Number], // [lng, lat]
+            required: true,
+          },
+        },
+      },
+      pickUpDate: {
+        type: Date,
+        required: true,
+      },
+      timeSlot:{
+        type:String,
+        required:true,
+        enum: [
+          "9:00 AM - 11:00 AM",
+          "11:00 AM - 1:00 PM",
+          "2:00 PM - 4:00 PM",
+          "4:00 PM - 6:00 PM"
+        ]
+      }
     },
-    pickupAddress: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    preferedPickupDate: {
-      type: Date,
-      required: true
-    },
-    timeSlot: {
-      type: String,
-      required: true,
-      trim: true
-    },
-
     mobileId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Mobile",
-      required: true
+      required: true,
     },
 
     storage: {
       type: String,
-      enum: ["32GB", "64GB", "128GB", "256GB", "512GB", "1TB"],
-      required: true
+      enum: ["32GB", "64GB", "128GB", "256GB", "512GB", "1TB", "2TB"],
+      required: true,
     },
-     
+
     carrier: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
     screenCondition: {
       type: String,
       enum: ["perfect", "scratched", "cracked"],
-      required: true
+      required: true,
     },
 
     bodyCondition: {
       type: String,
       enum: ["perfect", "scratched", "damaged"],
-      required: true
+      required: true,
     },
 
     batteryCondition: {
       type: String,
       enum: ["good", "average", "poor"],
-      required: true
+      required: true,
     },
 
     images: {
-      type: [String]
+      type: [String],
     },
 
     estimatedPrice: {
-      type: Number
+      type: Number,
     },
 
     status: {
       type: String,
-      default: "pending"
-    }
+      default: "pending",
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Form = mongoose.model("Form", formSchema);
