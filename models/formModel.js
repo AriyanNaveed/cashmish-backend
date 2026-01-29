@@ -2,10 +2,29 @@ import mongoose from "mongoose";
 
 const formSchema = new mongoose.Schema(
   {
-    userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    userName: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    phoneNumber: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    pickupAddress: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    preferedPickupDate: {
+      type: Date,
       required: true
+    },
+    timeSlot: {
+      type: String,
+      required: true,
+      trim: true
     },
 
     mobileId: {
