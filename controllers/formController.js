@@ -3,23 +3,25 @@ import { Mobile } from "../models/mobileModel.js";
 import cloudinary from "../config/cloudinary.js";
 import { calculatePrice } from "../utils/priceCalculator.js";
 
-
-  //  CREATE FORM (USER)
-
+/* =========================
+   CREATE FORM
+========================= */
 export const createForm = async (req, res) => {
   try {
-    if (!req.user?.id) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     const {
+      userId,
       mobileId,
       storage,
       carrier,
       screenCondition,
       bodyCondition,
-      batteryCondition
+      batteryCondition,
+      pickUpDetails
     } = req.body;
+
+    if (!mobileId || !pickUpDetails) {
+      return res.status(400).json({ message: "Required fields missing" });
+    }
 
     const mobile = await Mobile.findById(mobileId);
     if (!mobile) {
@@ -28,8 +30,7 @@ export const createForm = async (req, res) => {
 
     /* upload images */
     const imageUrls = [];
-
-    if (req.files && req.files.length > 0) {
+    if (req.files?.length) {
       for (const file of req.files) {
         const uploaded = await cloudinary.uploader.upload(file.path, {
           folder: "reseller_forms"
@@ -38,7 +39,7 @@ export const createForm = async (req, res) => {
       }
     }
 
-    /* calculate price (storage included) */
+    /* calculate price */
     const estimatedPrice = calculatePrice(mobile.basePrice, {
       storage,
       screen: screenCondition,
@@ -47,7 +48,7 @@ export const createForm = async (req, res) => {
     });
 
     const form = await Form.create({
-      userId: req.user.id,
+      userId,
       mobileId,
       storage,
       carrier,
@@ -55,22 +56,24 @@ export const createForm = async (req, res) => {
       bodyCondition,
       batteryCondition,
       images: imageUrls,
-      estimatedPrice
+      estimatedPrice,
+      pickUpDetails
     });
 
     res.status(201).json(form);
   } catch (error) {
-    res.status(500).json({ message: "Form submission failed" });
+    res.status(500).json({ message: "Form creation failed" });
   }
 };
 
-
-  // GET USER FORMS (USER DASHBOARD)
-
-export const getMyForms = async (req, res) => {
+/* =========================
+   GET ALL FORMS
+========================= */
+export const getAllForms = async (req, res) => {
   try {
-    const forms = await Form.find({ userId: req.user.id })
+    const forms = await Form.find()
       .populate("mobileId")
+      .populate("userId")
       .sort({ createdAt: -1 });
 
     res.json(forms);
@@ -79,21 +82,17 @@ export const getMyForms = async (req, res) => {
   }
 };
 
-
-  //  GET SINGLE FORM
-
+/* =========================
+   GET SINGLE FORM
+========================= */
 export const getFormById = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id)
       .populate("mobileId")
-      .populate("userId", "name email");
+      .populate("userId");
 
     if (!form) {
       return res.status(404).json({ message: "Form not found" });
-    }
-
-    if (form.userId._id.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Access denied" });
     }
 
     res.json(form);
@@ -102,103 +101,68 @@ export const getFormById = async (req, res) => {
   }
 };
 
-//  UPDATE FORM (USER – SAFE)
+/* =========================
+   UPDATE FORM
+========================= */
 export const updateForm = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id);
-
     if (!form) {
       return res.status(404).json({ message: "Form not found" });
     }
 
-    if (form.userId.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    if (form.status !== "pending") {
-      return res.status(400).json({ message: "Form cannot be updated" });
-    }
-
-    const allowedUpdates = {};
-    const fields = [
+    const allowedFields = [
       "storage",
       "carrier",
       "screenCondition",
       "bodyCondition",
-      "batteryCondition"
+      "batteryCondition",
+      "pickUpDetails",
+      "status"
     ];
 
-    fields.forEach(field => {
+    allowedFields.forEach(field => {
       if (req.body[field] !== undefined) {
-        allowedUpdates[field] = req.body[field];
+        form[field] = req.body[field];
       }
     });
 
-    const updatedForm = await Form.findByIdAndUpdate(
-      req.params.id,
-      allowedUpdates,
-      { new: true }
-    );
+    /* recalc price if needed */
+    if (
+      req.body.storage ||
+      req.body.screenCondition ||
+      req.body.bodyCondition ||
+      req.body.batteryCondition
+    ) {
+      const mobile = await Mobile.findById(form.mobileId);
+      form.estimatedPrice = calculatePrice(mobile.basePrice, {
+        storage: form.storage,
+        screen: form.screenCondition,
+        body: form.bodyCondition,
+        battery: form.batteryCondition
+      });
+    }
 
-    res.json(updatedForm);
+    await form.save();
+    res.json(form);
   } catch (error) {
     res.status(500).json({ message: "Form update failed" });
   }
 };
 
-//  DELETE FORM (USER)
+/* =========================
+   DELETE FORM
+========================= */
 export const deleteForm = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id);
-
     if (!form) {
       return res.status(404).json({ message: "Form not found" });
-    }
-
-    if (form.userId.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Access denied" });
     }
 
     await form.deleteOne();
     res.json({ message: "Form deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: "Form delete failed" });
-  }
-};
-
-// ADMIN – GET ALL FORMS
-export const getAllForms = async (req, res) => {
-  try {
-    const forms = await Form.find()
-      .populate("mobileId")
-      .populate("userId", "name email")
-      .sort({ createdAt: -1 });
-
-    res.json(forms);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to fetch forms" });
-  }
-};
-
-
-//  ADMIN – UPDATE STATUS / PRICE
-
-export const adminUpdateForm = async (req, res) => {
-  try {
-    const { status, estimatedPrice } = req.body;
-
-    const form = await Form.findByIdAndUpdate(
-      req.params.id,
-      { status, estimatedPrice },
-      { new: true }
-    );
-
-    if (!form) {
-      return res.status(404).json({ message: "Form not found" });
-    }
-
-    res.json(form);
-  } catch (error) {
-    res.status(500).json({ message: "Admin update failed" });
   }
 };
