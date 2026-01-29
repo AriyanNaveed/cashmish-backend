@@ -20,7 +20,7 @@ const formSchema = new mongoose.Schema(
       required: true
     },
      
-    carier: {
+    carrier: {
       type: String,
       required: true
     },
@@ -43,8 +43,7 @@ const formSchema = new mongoose.Schema(
     },
 
     images: {
-      type: [String],
-      required: true
+      type: [String]
     },
 
     estimatedPrice: {

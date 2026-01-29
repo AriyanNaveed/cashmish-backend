@@ -4,13 +4,18 @@ import cloudinary from "../config/cloudinary.js";
 import { calculatePrice } from "../utils/priceCalculator.js";
 
 
-// CREATE FORM (USER SUBMIT)
+  //  CREATE FORM (USER)
 
 export const createForm = async (req, res) => {
   try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const {
       mobileId,
       storage,
+      carrier,
       screenCondition,
       bodyCondition,
       batteryCondition
@@ -23,15 +28,19 @@ export const createForm = async (req, res) => {
 
     /* upload images */
     const imageUrls = [];
-    for (const file of req.files) {
-      const uploaded = await cloudinary.uploader.upload(file.path, {
-        folder: "reseller_forms"
-      });
-      imageUrls.push(uploaded.secure_url);
+
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const uploaded = await cloudinary.uploader.upload(file.path, {
+          folder: "reseller_forms"
+        });
+        imageUrls.push(uploaded.secure_url);
+      }
     }
 
-    /* calculate price */
+    /* calculate price (storage included) */
     const estimatedPrice = calculatePrice(mobile.basePrice, {
+      storage,
       screen: screenCondition,
       body: bodyCondition,
       battery: batteryCondition
@@ -41,6 +50,7 @@ export const createForm = async (req, res) => {
       userId: req.user.id,
       mobileId,
       storage,
+      carrier,
       screenCondition,
       bodyCondition,
       batteryCondition,
@@ -55,7 +65,7 @@ export const createForm = async (req, res) => {
 };
 
 
-// GET USER FORMS (USER DASHBOARD)
+  // GET USER FORMS (USER DASHBOARD)
 
 export const getMyForms = async (req, res) => {
   try {
@@ -69,7 +79,9 @@ export const getMyForms = async (req, res) => {
   }
 };
 
-// GET SINGLE FORM
+
+  //  GET SINGLE FORM
+
 export const getFormById = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id)
@@ -80,7 +92,6 @@ export const getFormById = async (req, res) => {
       return res.status(404).json({ message: "Form not found" });
     }
 
-    /* user security */
     if (form.userId._id.toString() !== req.user.id) {
       return res.status(403).json({ message: "Access denied" });
     }
@@ -91,7 +102,7 @@ export const getFormById = async (req, res) => {
   }
 };
 
-// UPDATE FORM (USER – LIMITED)
+//  UPDATE FORM (USER – SAFE)
 export const updateForm = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id);
@@ -108,9 +119,24 @@ export const updateForm = async (req, res) => {
       return res.status(400).json({ message: "Form cannot be updated" });
     }
 
+    const allowedUpdates = {};
+    const fields = [
+      "storage",
+      "carrier",
+      "screenCondition",
+      "bodyCondition",
+      "batteryCondition"
+    ];
+
+    fields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        allowedUpdates[field] = req.body[field];
+      }
+    });
+
     const updatedForm = await Form.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      allowedUpdates,
       { new: true }
     );
 
@@ -120,8 +146,7 @@ export const updateForm = async (req, res) => {
   }
 };
 
-
-// DELETE FORM (USER)
+//  DELETE FORM (USER)
 export const deleteForm = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id);
@@ -155,7 +180,9 @@ export const getAllForms = async (req, res) => {
   }
 };
 
-// ADMIN – UPDATE STATUS / FINAL PRICE
+
+//  ADMIN – UPDATE STATUS / PRICE
+
 export const adminUpdateForm = async (req, res) => {
   try {
     const { status, estimatedPrice } = req.body;
@@ -165,6 +192,10 @@ export const adminUpdateForm = async (req, res) => {
       { status, estimatedPrice },
       { new: true }
     );
+
+    if (!form) {
+      return res.status(404).json({ message: "Form not found" });
+    }
 
     res.json(form);
   } catch (error) {
