@@ -3,9 +3,7 @@ import { Mobile } from "../models/mobileModel.js";
 import cloudinary from "../config/cloudinary.js";
 import { calculatePrice } from "../utils/priceCalculator.js";
 
-/* =========================
-   CREATE FORM
-========================= */
+//form controllers
 export const createForm = async (req, res) => {
   try {
     const {
@@ -66,9 +64,7 @@ export const createForm = async (req, res) => {
   }
 };
 
-/* =========================
-   GET ALL FORMS
-========================= */
+//get all forms
 export const getAllForms = async (req, res) => {
   try {
     const forms = await Form.find()
@@ -82,9 +78,7 @@ export const getAllForms = async (req, res) => {
   }
 };
 
-/* =========================
-   GET SINGLE FORM
-========================= */
+//get single form by id
 export const getFormById = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id)
@@ -101,9 +95,7 @@ export const getFormById = async (req, res) => {
   }
 };
 
-/* =========================
-   UPDATE FORM
-========================= */
+//update form
 export const updateForm = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id);
@@ -150,9 +142,7 @@ export const updateForm = async (req, res) => {
   }
 };
 
-/* =========================
-   DELETE FORM
-========================= */
+//delete form
 export const deleteForm = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id);
