@@ -1,4 +1,4 @@
-import { PickUpDetails } from "../models/pickUpDetails";
+import { PickUpDetails } from "../models/pickupModel.js";
 
 export const createPickUpDetails = async (req, res) => {
   try {
