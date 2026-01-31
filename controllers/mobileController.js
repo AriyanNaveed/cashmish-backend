@@ -1,8 +1,7 @@
 import { Mobile } from "../models/mobileModel.js";
 
-/* ===============================
-   ADD MOBILE (ADMIN)
-================================ */
+//   ADD MOBILE (ADMIN)
+
 export const addMobile = async (req, res) => {
   try {
     const { brand, phoneModel, basePrice, image } = req.body;
@@ -20,10 +19,8 @@ export const addMobile = async (req, res) => {
   }
 };
 
-/* ===============================
-   GET ALL MOBILES (USER)
-   only active
-================================ */
+//   GET ALL MOBILES (USER)
+//   only active
 export const getMobiles = async (req, res) => {
   try {
     const mobiles = await Mobile.find({ isActive: true });
@@ -33,9 +30,7 @@ export const getMobiles = async (req, res) => {
   }
 };
 
-/* ===============================
-   GET MOBILE BY ID
-================================ */
+//   GET MOBILE BY ID
 export const getMobileById = async (req, res) => {
   try {
     const mobile = await Mobile.findById(req.params.id);
@@ -50,9 +45,7 @@ export const getMobileById = async (req, res) => {
   }
 };
 
-/* ===============================
-   GET MOBILES BY BRAND
-================================ */
+//   GET MOBILES BY BRAND
 export const getMobilesByBrand = async (req, res) => {
   try {
     const { brand } = req.query;
@@ -72,9 +65,7 @@ export const getMobilesByBrand = async (req, res) => {
   }
 };
 
-/* ===============================
-   UPDATE MOBILE (ADMIN – SAFE)
-================================ */
+//   UPDATE MOBILE (ADMIN – SAFE)
 export const updateMobile = async (req, res) => {
   try {
     const updates = {};
@@ -102,9 +93,7 @@ export const updateMobile = async (req, res) => {
   }
 };
 
-/* ===============================
-   DELETE MOBILE (ADMIN)
-================================ */
+//   DELETE MOBILE (ADMIN – SOFT DELETE)
 export const deleteMobile = async (req, res) => {
   try {
     const mobile = await Mobile.findByIdAndDelete(req.params.id);
