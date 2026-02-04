@@ -9,7 +9,7 @@ const router = express.Router();
 //local route
 router.post("/signup", signup);
 router.post("/login", login);
-router.put("/:id/role", updateUserRole);
+router.put("/:id", updateUserRole);
 router.get("/", getUsers);
 router.get("/:id", getUserById);
 router.delete("/:id", deleteUser);
