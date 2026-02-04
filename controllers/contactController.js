@@ -1,4 +1,4 @@
-import { Contact } from "../models/contactModel";
+import { Contact } from "../models/contactModel.js";
 
 // Contact create message
 export const createContact = async (req, res) => {

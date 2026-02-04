@@ -1,4 +1,4 @@
-import { createContact, getAllContacts, getContactById, updateContactById, deleteContactById } from "../controllers/contactController";
+import { createContact, getAllContacts, getContactById, updateContactById, deleteContactById } from "../controllers/contactController.js";
 import express from "express";
 
 const router = express.Router();
