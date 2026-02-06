@@ -1,4 +1,4 @@
-import { Inventory } from "../models/inventoryModel";
+import { Inventory } from "../models/inventoryModel.js";
 
 // Create inventory item
 export const createInventoryItem = async (req, res) => {

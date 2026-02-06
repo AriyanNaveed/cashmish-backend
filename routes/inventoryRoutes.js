@@ -1,4 +1,4 @@
-import { createInventoryItem, getAllInventoryItems, getInventoryItemById, updateInventoryItemById, deleteInventoryItemById } from "../controllers/inventoryController";
+import { createInventoryItem, getAllInventoryItems, getInventoryItemById, updateInventoryItemById, deleteInventoryItemById } from "../controllers/inventoryController.js";
 import express from "express";
 
 const router = express.Router();
