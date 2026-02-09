@@ -57,7 +57,7 @@ export const getMobilesByBrand = async (req, res) => {
     const mobiles = await Mobile.find({
       brand: { $regex: new RegExp(`^${brand}$`, "i") },
       isActive: true
-    }).select("phoneModel _id");
+    }).select("phoneModel _id image");
 
     res.json(mobiles);
   } catch (error) {
