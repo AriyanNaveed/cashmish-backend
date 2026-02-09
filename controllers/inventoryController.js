@@ -11,7 +11,8 @@ export const createInventoryItem = async (req, res) => {
         purchaseDate,
         condition,
         source,
-        notes
+        notes,
+        imeiNumber
     });
     
     res.status(201).json(inventoryItem);
@@ -43,10 +44,10 @@ export const getInventoryItemById = async (req, res) => {
 // Update inventory item by ID
 export const updateInventoryItemById = async (req, res) => {
     try {
-        const { phoneModel, storage, purchasePrice, purchaseDate, condition, source, notes } = req.body;
+        const { phoneModel, storage, purchasePrice, purchaseDate, condition, source, notes, imeiNumber, status } = req.body;
         const inventoryItem = await Inventory.findByIdAndUpdate(
             req.params.id,
-            { phoneModel, storage, purchasePrice, purchaseDate, condition, source, notes },
+            { phoneModel, storage, purchasePrice, purchaseDate, condition, source, notes, imeiNumber, status },
             { new: true },
         );
         if (!inventoryItem) {
