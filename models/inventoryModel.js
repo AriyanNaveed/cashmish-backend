@@ -10,6 +10,9 @@ const inventorySchema = new mongoose.Schema({
         enum:["32GB","64GB","128GB","256GB","512GB","1TB","2TB"],
         required:true
     },
+    imeiNumber:{
+        type:String
+    },
     purchasePrice:{
         type:Number,
         required:true
@@ -29,6 +32,11 @@ const inventorySchema = new mongoose.Schema({
     },
     notes:{
         type:String
+    },
+    status:{
+        type:String,
+        enum:["In Stock","Sold","Reserved"],
+        default:"In Stock"
     }
 },{timestamps:true});
 
