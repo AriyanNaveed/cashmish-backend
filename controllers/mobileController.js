@@ -24,7 +24,8 @@ export const addMobile = async (req, res) => {
 //   only active
 export const getMobiles = async (req, res) => {
   try {
-    const mobiles = await Mobile.find({ isActive: true });
+    const query = req.query.includeInactive === 'true' ? {} : { isActive: true };
+    const mobiles = await Mobile.find(query);
     res.json(mobiles);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch mobiles" });

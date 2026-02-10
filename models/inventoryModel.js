@@ -1,52 +1,54 @@
 import mongoose from "mongoose";
 
 const inventorySchema = new mongoose.Schema({
-    phoneModel:{
-        type:String,
-        required:true
+    phoneModel: {
+        type: String,
+        required: true
     },
-    storage:{
-        type:String,
-        enum:["32GB","64GB","128GB","256GB","512GB","1TB","2TB"],
-        required:true
+    storage: {
+        type: String,
+        enum: ["32GB", "64GB", "128GB", "256GB", "512GB", "1TB", "2TB"],
+        required: true
     },
-    imeiNumber:{
-        type:String
+    imeiNumber: {
+        type: String
     },
-    purchasePrice:{
-        type:Number,
-        required:true
+    purchasePrice: {
+        type: Number,
+        required: true,
+        min: [0, "Purchase Price cannot be negative"]
     },
-    purchaseDate:{
-        type:Date,
-        required:true
+    purchaseDate: {
+        type: Date,
+        required: true
     },
-    condition:{ 
-        type:String,
-        enum:["New","Like New","Good","Fair","Poor"],
-        required:true
+    condition: {
+        type: String,
+        enum: ["New", "Like New", "Good", "Fair", "Poor"],
+        required: true
     },
-    salePrice:{
-        type:Number
+    salePrice: {
+        type: Number,
+        min: [0, "Sale Price cannot be negative"]
     },
-    saleDate:{
-        type:Date
+    saleDate: {
+        type: Date
     },
-    buyer:{
-        type:String
+    buyer: {
+        type: String
     },
-    source:{
-        type:String,
-        required:true
+    source: {
+        type: String,
+        required: true
     },
-    notes:{
-        type:String
+    notes: {
+        type: String
     },
-    status:{
-        type:String,
-        enum:["In Stock","Sold","Reserved"],
-        default:"In Stock"
+    status: {
+        type: String,
+        enum: ["In Stock", "Sold", "Reserved"],
+        default: "In Stock"
     }
-},{timestamps:true});
+}, { timestamps: true });
 
 export const Inventory = mongoose.model("Inventory", inventorySchema);
