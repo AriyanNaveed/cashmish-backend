@@ -102,12 +102,41 @@ export const createForm = async (req, res) => {
 //get all forms
 export const getAllForms = async (req, res) => {
   try {
-    const forms = await Form.find()
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = {};
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      // Submissions store pickUpDetails as an object, but we can search inside it if we know the structure.
+      // However, typical 'find' on subdocuments works.
+      query.$or = [
+        { "pickUpDetails.fullName": searchRegex },
+        { "pickUpDetails.email": searchRegex },
+        { "pickUpDetails.phone": searchRegex },
+        { status: searchRegex }
+      ];
+    }
+
+    const total = await Form.countDocuments(query);
+    const forms = await Form.find(query)
       .populate("mobileId")
       .populate("userId")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
-    res.json(forms);
+    res.json({
+      forms,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch forms" });
   }

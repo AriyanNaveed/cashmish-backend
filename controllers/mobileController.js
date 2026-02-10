@@ -25,8 +25,41 @@ export const addMobile = async (req, res) => {
 export const getMobiles = async (req, res) => {
   try {
     const query = req.query.includeInactive === 'true' ? {} : { isActive: true };
-    const mobiles = await Mobile.find(query);
-    res.json(mobiles);
+
+    // Brand Filter
+    if (req.query.brand && req.query.brand !== 'all') {
+      query.brand = { $regex: new RegExp(`^${req.query.brand}$`, 'i') };
+    }
+
+    // Search
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      query.$or = [
+        { brand: searchRegex },
+        { phoneModel: searchRegex }
+      ];
+    }
+
+    // Pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await Mobile.countDocuments(query);
+    const mobiles = await Mobile.find(query)
+      .sort({ createdAt: -1 }) // Sort by newest first
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      mobiles,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch mobiles" });
   }
