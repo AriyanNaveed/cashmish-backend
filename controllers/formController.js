@@ -1,81 +1,92 @@
 import { Form } from "../models/formModel.js";
 import { Mobile } from "../models/mobileModel.js";
 import cloudinary from "../config/cloudinary.js";
-import { calculatePrice } from "../utils/priceCalculator.js";
 import streamifier from "streamifier";
-
 import { PriceConfig } from "../models/priceConfigModel.js";
+import { calculatePrice } from "../utils/priceCalculator.js";
 
-//form controllers
 export const createForm = async (req, res) => {
   try {
     let {
-      userId,
       mobileId,
       storage,
       carrier,
       screenCondition,
       bodyCondition,
       batteryCondition,
-      pickUpDetails
+      pickUpDetails,
+      userId
     } = req.body;
 
     if (typeof pickUpDetails === "string") {
-      pickUpDetails = JSON.parse(pickUpDetails.trim());
+      pickUpDetails = JSON.parse(pickUpDetails);
     }
 
-    if (!mobileId || !pickUpDetails) {
+    // Validation
+    if (!mobileId || !pickUpDetails?.phoneNumber) {
       return res.status(400).json({ message: "Required fields missing" });
     }
 
     const mobile = await Mobile.findById(mobileId);
-    if (!mobile) {
-      return res.status(404).json({ message: "Mobile not found" });
-    }
+    if (!mobile) return res.status(404).json({ message: "Mobile not found" });
 
-    /* upload images */
+    // Upload images to cloudinary
     const imageUrls = [];
-
-    if (req.files && req.files.length > 0) {
+    if (req.files?.length) {
       for (const file of req.files) {
         const uploaded = await new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
-            { folder: "reseller_forms" },
-            (error, result) => {
-              if (error) reject(error);
+            { folder: "forms" },
+            (err, result) => {
+              if (err) reject(err);
               else resolve(result);
             }
           );
-
           streamifier.createReadStream(file.buffer).pipe(stream);
         });
-
         imageUrls.push(uploaded.secure_url);
       }
     }
 
-    /* determine effective rules (global + mobile overrides) */
+    // Get pricing rules
     let globalRules = await PriceConfig.findOne();
-    let effectiveRules = globalRules ? JSON.parse(JSON.stringify(globalRules)) : undefined;
+    let effectiveRules = globalRules
+      ? JSON.parse(JSON.stringify(globalRules))
+      : {};
 
+    // Apply mobile-specific deduction rules
     if (mobile.deductionRules) {
-      if (!effectiveRules) effectiveRules = {};
-
-      if (mobile.deductionRules.screen) effectiveRules.screen = { ...effectiveRules.screen, ...mobile.deductionRules.screen };
-      if (mobile.deductionRules.body) effectiveRules.body = { ...effectiveRules.body, ...mobile.deductionRules.body };
-      if (mobile.deductionRules.battery) effectiveRules.battery = { ...effectiveRules.battery, ...mobile.deductionRules.battery };
+      if (mobile.deductionRules.screen)
+        effectiveRules.screen = {
+          ...effectiveRules.screen,
+          ...mobile.deductionRules.screen,
+        };
+      if (mobile.deductionRules.body)
+        effectiveRules.body = {
+          ...effectiveRules.body,
+          ...mobile.deductionRules.body,
+        };
+      if (mobile.deductionRules.battery)
+        effectiveRules.battery = {
+          ...effectiveRules.battery,
+          ...mobile.deductionRules.battery,
+        };
     }
 
-    /* calculate price */
-    const estimatedPrice = calculatePrice(mobile.basePrice, {
-      storage,
-      screen: screenCondition,
-      body: bodyCondition,
-      battery: batteryCondition
-    }, effectiveRules);
+    // Calculate estimated price
+    const estimatedPrice = calculatePrice(
+      mobile.basePrice,
+      {
+        storage,
+        screen: screenCondition,
+        body: bodyCondition,
+        battery: batteryCondition,
+      },
+      effectiveRules
+    );
 
-    const form = await Form.create({
-      userId,
+    // Prepare form data
+    const formData = {
       mobileId,
       storage,
       carrier,
@@ -84,151 +95,122 @@ export const createForm = async (req, res) => {
       batteryCondition,
       images: imageUrls,
       estimatedPrice,
-      pickUpDetails
+      pickUpDetails,
+      status: 'pending',
+      bidPrice: 0
+    };
+
+    // Add userId only if logged-in user
+    if (req.user && req.user.id) {
+      formData.userId = req.user.id;
+      console.log("✅ LOGGED-IN USER - userId:", req.user.id);
+    } else if (userId) {
+      formData.userId = userId;
+      console.log("✅ LOGGED-IN USER - userId from body:", userId);
+    } else {
+      formData.userId = null;
+      console.log("👤 GUEST USER - No userId");
+    }
+
+    const form = await Form.create(formData);
+    
+    // Populate mobile details before sending response
+    await form.populate('mobileId');
+    
+    console.log("📝 Form created:", {
+      id: form._id,
+      userId: form.userId,
+      phoneNumber: form.pickUpDetails?.phoneNumber,
+      isGuest: !form.userId,
+      status: form.status,
+      bidPrice: form.bidPrice
     });
 
     res.status(201).json(form);
   } catch (error) {
-    console.error("CREATE FORM ERROR 👉", error);
-    res.status(500).json({
-      message: "Form creation failed",
-      error: error.message,
-      stack: error.stack
-    });
+    console.error("❌ Form creation error:", error);
+    res.status(500).json({ message: "Form creation failed", error: error.message });
   }
-
 };
 
-//get all forms
 export const getAllForms = async (req, res) => {
   try {
-    // Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    const query = {};
-    if (req.query.search) {
-      const searchRegex = new RegExp(req.query.search, 'i');
-      // Submissions store pickUpDetails as an object, but we can search inside it if we know the structure.
-      // However, typical 'find' on subdocuments works.
-      query.$or = [
-        { "pickUpDetails.fullName": searchRegex },
-        { "pickUpDetails.email": searchRegex },
-        { "pickUpDetails.phone": searchRegex },
-        { status: searchRegex }
-      ];
-    }
-
-    const total = await Form.countDocuments(query);
-    const forms = await Form.find(query)
+    const forms = await Form.find({})
       .populate("mobileId")
-      .populate("userId")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+      .populate("userId", "name email phoneNumber")
+      .sort({ createdAt: -1 });
 
-    res.json({
-      forms,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit)
-      }
-    });
+    console.log(`📦 Found ${forms.length} total forms`);
+
+    res.json({ forms });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch forms" });
+    console.error("❌ Fetch forms error:", error);
+    res.status(500).json({ message: "Fetch failed", error: error.message });
   }
 };
 
-//get single form by id
+export const updateForm = async (req, res) => {
+  try {
+    const form = await Form.findById(req.params.id);
+    if (!form) return res.status(404).json({ message: "Form not found" });
+
+    const oldStatus = form.status;
+
+    // Update status
+    if (req.body.status) {
+      form.status = req.body.status;
+    }
+
+    // Update bidPrice (admin sets this)
+    if (req.body.bidPrice !== undefined) {
+      form.bidPrice = req.body.bidPrice;
+    }
+
+    await form.save();
+    
+    // Populate before sending response
+    await form.populate('mobileId');
+    await form.populate('userId', 'name email phoneNumber');
+
+    console.log("✏️ Form updated:", {
+      id: form._id,
+      oldStatus,
+      newStatus: form.status,
+      bidPrice: form.bidPrice
+    });
+
+    res.json(form);
+  } catch (error) {
+    console.error("❌ Update form error:", error);
+    res.status(500).json({ message: "Update failed", error: error.message });
+  }
+};
+
+export const deleteForm = async (req, res) => {
+  try {
+    const form = await Form.findByIdAndDelete(req.params.id);
+    if (!form) return res.status(404).json({ message: "Form not found" });
+
+    console.log("🗑️ Form deleted:", req.params.id);
+
+    res.json({ message: "Form deleted successfully" });
+  } catch (error) {
+    console.error("❌ Delete form error:", error);
+    res.status(500).json({ message: "Delete failed", error: error.message });
+  }
+};
+
 export const getFormById = async (req, res) => {
   try {
     const form = await Form.findById(req.params.id)
       .populate("mobileId")
-      .populate("userId");
+      .populate("userId", "name email phoneNumber");
 
-    if (!form) {
-      return res.status(404).json({ message: "Form not found" });
-    }
+    if (!form) return res.status(404).json({ message: "Form not found" });
 
     res.json(form);
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch form" });
-  }
-};
-
-//update form
-export const updateForm = async (req, res) => {
-  try {
-    const form = await Form.findById(req.params.id);
-    if (!form) {
-      return res.status(404).json({ message: "Form not found" });
-    }
-
-    const allowedFields = [
-      "storage",
-      "carrier",
-      "screenCondition",
-      "bodyCondition",
-      "batteryCondition",
-      "pickUpDetails",
-      "status",
-      "bidPrice"
-    ];
-
-    allowedFields.forEach(field => {
-      if (req.body[field] !== undefined) {
-        form[field] = req.body[field];
-      }
-    });
-
-    /* recalc price if needed */
-    if (
-      req.body.storage ||
-      req.body.screenCondition ||
-      req.body.bodyCondition ||
-      req.body.batteryCondition
-    ) {
-      const mobile = await Mobile.findById(form.mobileId);
-      let globalRules = await PriceConfig.findOne();
-
-      let effectiveRules = globalRules ? JSON.parse(JSON.stringify(globalRules)) : undefined;
-
-      if (mobile.deductionRules) {
-        if (!effectiveRules) effectiveRules = {};
-        if (mobile.deductionRules.screen) effectiveRules.screen = { ...effectiveRules.screen, ...mobile.deductionRules.screen };
-        if (mobile.deductionRules.body) effectiveRules.body = { ...effectiveRules.body, ...mobile.deductionRules.body };
-        if (mobile.deductionRules.battery) effectiveRules.battery = { ...effectiveRules.battery, ...mobile.deductionRules.battery };
-      }
-
-      form.estimatedPrice = calculatePrice(mobile.basePrice, {
-        storage: form.storage,
-        screen: form.screenCondition,
-        body: form.bodyCondition,
-        battery: form.batteryCondition
-      }, effectiveRules);
-    }
-
-    await form.save();
-    res.json(form);
-  } catch (error) {
-    res.status(500).json({ message: "Form update failed" });
-  }
-};
-
-//delete form
-export const deleteForm = async (req, res) => {
-  try {
-    const form = await Form.findById(req.params.id);
-    if (!form) {
-      return res.status(404).json({ message: "Form not found" });
-    }
-
-    await form.deleteOne();
-    res.json({ message: "Form deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Form delete failed" });
+    console.error("❌ Get form error:", error);
+    res.status(500).json({ message: "Fetch failed", error: error.message });
   }
 };
