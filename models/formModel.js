@@ -49,6 +49,8 @@ const formSchema = new mongoose.Schema(
     storage: { type: String, required: true },
     carrier: { type: String, required: true },
 
+    condition: { type: String, required: true },
+
     screenCondition: { type: String, required: true },
     bodyCondition: { type: String, required: true },
     batteryCondition: { type: String, required: true },
