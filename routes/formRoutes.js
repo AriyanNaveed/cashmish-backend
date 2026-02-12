@@ -3,6 +3,7 @@ import {
   createForm,
   getAllForms,
   updateForm,
+  getFormById,
   deleteForm,
   getDashboardStats,
 } from "../controllers/formController.js";
