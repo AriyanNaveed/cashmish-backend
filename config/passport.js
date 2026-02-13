@@ -45,7 +45,7 @@ export default (passport) => {
           if (user) return done(null, user);
 
           user = await User.create({
-            name: profile.displayName,
+            name: profile.displayName || profile.name.givenName || "Google User",
             email,
             googleId: profile.id,
             password: null

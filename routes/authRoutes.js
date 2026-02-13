@@ -30,7 +30,15 @@ router.get(
       keys.jwtSecret,
       { expiresIn: "1h" },
     );
-    res.json({ token, user: req.user });
+    res.send(`
+  <script>
+    window.opener.postMessage(
+      ${JSON.stringify({ token, user: req.user })}, 
+      "*"
+    );
+    window.close();
+  </script>
+`);
   },
 );
 //local route
