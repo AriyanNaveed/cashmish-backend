@@ -10,6 +10,11 @@ export const sendEmail = async (options) => {
         },
     });
 
+    console.log("Transporter created with:", {
+        user: keys.emailUser ? 'DEFINED' : 'UNDEFINED',
+        pass: keys.emailPass ? 'DEFINED' : 'UNDEFINED'
+    });
+
     const mailOptions = {
         from: `"CashMish Support" <${keys.emailUser}>`,
         to: options.email,

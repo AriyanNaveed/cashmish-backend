@@ -6,6 +6,7 @@ import cloudinary from "../config/cloudinary.js";
 import streamifier from "streamifier";
 import { PriceConfig } from "../models/priceConfigModel.js";
 import { calculatePrice } from "../utils/priceCalculator.js";
+import { sendEmail, getFormConfirmationTemplate } from "../utils/emailService.js";
 
 export const createForm = async (req, res) => {
   try {
@@ -123,7 +124,6 @@ export const createForm = async (req, res) => {
 
     // Send confirmation email
     try {
-      const { sendEmail, getFormConfirmationTemplate } = await import("../utils/emailService.js");
       const html = getFormConfirmationTemplate(
         form.pickUpDetails.fullName,
         `${form.mobileId.brand} ${form.mobileId.phoneModel}`,
