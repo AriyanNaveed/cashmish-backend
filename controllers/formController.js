@@ -437,3 +437,37 @@ export const getDashboardStats = async (req, res) => {
     res.status(500).json({ message: "Server error fetching dashboard stats" });
   }
 };
+// ── WALLET BALANCE API ─────────────────────────────────────
+export const getWalletBalance = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID required" });
+    }
+
+    const acceptedForms = await Form.find({
+      userId: userId,
+      status: "accepted"
+    });
+
+    const balance = acceptedForms.reduce((total, form) => {
+      return total + (parseFloat(form.bidPrice) || 0);
+    }, 0);
+
+    const pendingActions = acceptedForms.map(form => ({
+      orderId: form._id,
+      amount: form.bidPrice
+    }));
+
+    res.json({
+      balance,
+      pendingActions
+    });
+
+  } catch (error) {
+    console.error("❌ Wallet Balance Error:", error);
+    res.status(500).json({ message: "Wallet fetch failed" });
+  }
+};
+

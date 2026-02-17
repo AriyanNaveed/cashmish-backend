@@ -5,6 +5,7 @@ import {
   updateForm,
   getFormById,
   deleteForm,
+  getWalletBalance, 
   getDashboardStats,
   getEstimate,
 } from "../controllers/formController.js";
@@ -18,6 +19,7 @@ router.get("/stats", getDashboardStats);
 router.post("/estimate", getEstimate);
 router.post("/", upload.array("images", 5), createForm);
 router.get("/", getAllForms);
+router.get("/wallet-balance/:userId", getWalletBalance);
 router.get("/:id", getFormById);
 router.put("/:id", updateForm);
 router.delete("/:id", deleteForm);
