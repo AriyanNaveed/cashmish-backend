@@ -29,7 +29,7 @@ export const addBankDetails = async (req, res) => {
 //get all bank details
 export const getBankDetails = async (req, res) => {
     try {
-        const bankDetails = await BankDetails.find().populate("userId", "name email");
+        const bankDetails = await BankDetails.find().populate("userId", "name email").sort({ createdAt: -1 });
         res.status(200).json(bankDetails);
     } catch (error) {
         res.status(500).json({ error: error.message });
