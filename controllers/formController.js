@@ -430,8 +430,22 @@ export const getDashboardStats = async (req, res) => {
       value: item.value
     }));
 
-    // 6. Recent Submissions (Top 5)
-    // Populate mobileId to get brand and model
+    // 6. Condition Chart Data
+    const conditionAgg = await Form.aggregate([
+      {
+        $group: {
+          _id: "$condition",
+          value: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const conditionData = conditionAgg.map(item => ({
+      name: item._id || 'Unknown',
+      value: item.value
+    }));
+
+    // 7. Recent Submissions (Top 5)
     const recentSubmissions = await Form.find()
       .sort({ createdAt: -1 })
       .limit(5)
@@ -448,6 +462,7 @@ export const getDashboardStats = async (req, res) => {
       totalSale,
       chartData,
       brandData,
+      conditionData,
       recentSubmissions
     });
 
