@@ -1,6 +1,7 @@
 import { BankDetails } from "../models/bankDetailsModel.js";
 import { Wallet } from "../models/walletModel.js";
 import { Form } from "../models/formModel.js";
+import { sendEmail, getPayoutSentTemplate } from "../utils/emailService.js";
 
 //add bank details
 export const addBankDetails = async (req, res) => {
@@ -42,6 +43,9 @@ export const updateBankDetails = async (req, res) => {
         const { id } = req.params;
         const { userId, accountNumber, accountHolderName, bankName, status } = req.body;
 
+        const oldDetails = await BankDetails.findById(id);
+        if (!oldDetails) return res.status(404).json({ message: "Bank details not found" });
+
         const updateData = {};
         if (userId) updateData.userId = userId;
         if (accountNumber) updateData.accountNumber = accountNumber;
@@ -49,7 +53,27 @@ export const updateBankDetails = async (req, res) => {
         if (bankName) updateData.bankName = bankName;
         if (status) updateData.status = status;
 
-        const bankDetails = await BankDetails.findByIdAndUpdate(id, updateData, { new: true });
+        const bankDetails = await BankDetails.findByIdAndUpdate(id, updateData, { new: true }).populate("userId", "name email");
+
+        // ✅ Send Payout Confirmation Email if status changed to 'paid'
+        if (status === 'paid' && oldDetails.status !== 'paid') {
+            try {
+                const subject = 'Payment Processed - CashMish';
+                const html = getPayoutSentTemplate(
+                    bankDetails.userId.name,
+                    bankDetails.amount
+                );
+
+                await sendEmail({
+                    email: bankDetails.userId.email,
+                    subject,
+                    html,
+                });
+            } catch (emailError) {
+                console.error("📧 Payout email error:", emailError.message);
+            }
+        }
+
         res.status(200).json(bankDetails);
     } catch (error) {
         res.status(500).json({ error: error.message });

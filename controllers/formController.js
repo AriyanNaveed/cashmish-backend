@@ -238,6 +238,12 @@ export const updateForm = async (req, res) => {
     const oldStatus = form.status;
     const oldBidPrice = form.bidPrice;
 
+    // ❌ Block updates if already finalized (accepted, paid, or rejected)
+    const finalizedStatuses = ['accepted', 'paid', 'rejected'];
+    if (finalizedStatuses.includes(oldStatus)) {
+      return res.status(400).json({ message: `Cannot update a ${oldStatus} submission.` });
+    }
+
     // Update status
     if (req.body.status) {
       form.status = req.body.status;
