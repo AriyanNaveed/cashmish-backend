@@ -15,6 +15,7 @@ import bankDetailsRoutes from './routes/bankDetailsRoutes.js';
 import couponRoutes from './routes/couponRoutes.js';
 
 import reviewRoutes from './routes/reviewRoutes.js';
+import blogRoutes from './routes/blogRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +43,7 @@ app.use("/api/price-config", priceConfigRoutes);
 app.use("/api/bankDetails", bankDetailsRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/blogs", blogRoutes);
 
 //connect to database and start server
 connectDB();
