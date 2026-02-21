@@ -3,15 +3,20 @@ import keys from '../config/keys.js';
 
 export const sendEmail = async (options) => {
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: keys.smtpHost,
+    port: keys.smtpPort,
+    secure: false, // TLS on port 587
     auth: {
-      user: keys.emailUser,
-      pass: keys.emailPass,
+      user: keys.smtpUser,
+      pass: keys.smtpPass,
+    },
+    tls: {
+      ciphers: 'SSLv3',
     },
   });
 
   const mailOptions = {
-    from: `"CashMish Support" <${keys.emailUser}>`,
+    from: `"CashMish Support" <${keys.emailFrom}>`,
     to: options.email,
     subject: options.subject,
     html: options.html,
