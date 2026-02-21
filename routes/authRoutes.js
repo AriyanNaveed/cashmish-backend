@@ -30,7 +30,7 @@ router.get(
     const token = jwt.sign(
       { id: req.user._id, email: req.user.email },
       keys.jwtSecret,
-      { expiresIn: "1h" },
+      { expiresIn: "7d" },
     );
     res.send(`
   <script>
