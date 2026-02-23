@@ -1,19 +1,31 @@
 import nodemailer from 'nodemailer';
 import keys from '../config/keys.js';
 
+// Create transporter once at module level
+const transporter = nodemailer.createTransport({
+  host: keys.smtpHost,
+  port: keys.smtpPort,
+  secure: true, // TLS on port 587
+  auth: {
+    user: keys.smtpUser,
+    pass: keys.smtpPass,
+  },
+  tls: {
+    ciphers: 'SSLv3',
+  },
+});
+
+// ✅ Verify SMTP connection on startup
+(async () => {
+  try {
+    await transporter.verify();
+    console.log("✅ SMTP READY — connected to", keys.smtpHost, "as", keys.smtpUser);
+  } catch (err) {
+    console.error("❌ SMTP ERROR:", err.message);
+  }
+})();
+
 export const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    host: keys.smtpHost,
-    port: keys.smtpPort,
-    secure: false, // TLS on port 587
-    auth: {
-      user: keys.smtpUser,
-      pass: keys.smtpPass,
-    },
-    tls: {
-      ciphers: 'SSLv3',
-    },
-  });
 
   const mailOptions = {
     from: `"CashMish Support" <${keys.emailFrom}>`,
