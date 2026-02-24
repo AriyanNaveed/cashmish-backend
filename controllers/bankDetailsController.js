@@ -3,11 +3,31 @@ import { Wallet } from "../models/walletModel.js";
 import { Form } from "../models/formModel.js";
 import { sendEmail, getPayoutSentTemplate } from "../utils/emailService.js";
 
-//add bank details
+//add bank details (supports bank + zelle)
 export const addBankDetails = async (req, res) => {
     try {
-        const { userId, accountNumber, accountHolderName, bankName, amount, status } = req.body;
-        const bankDetails = await BankDetails.create({ userId, accountNumber, accountHolderName, bankName, amount, status });
+        const { userId, accountNumber, accountHolderName, bankName, amount, status, payoutMethod, zelleContact, zelleContactType } = req.body;
+        const method = payoutMethod || 'bank';
+
+        // Validate based on payout method
+        if (method === 'bank') {
+            if (!accountNumber || !bankName) {
+                return res.status(400).json({ message: 'Account number and bank name are required for bank withdrawal.' });
+            }
+        } else if (method === 'zelle') {
+            if (!zelleContact || !zelleContactType) {
+                return res.status(400).json({ message: 'Zelle contact info is required for Zelle withdrawal.' });
+            }
+        }
+
+        const bankDetails = await BankDetails.create({
+            userId, accountHolderName, amount, status,
+            payoutMethod: method,
+            // Bank fields
+            ...(method === 'bank' && { accountNumber, bankName }),
+            // Zelle fields
+            ...(method === 'zelle' && { zelleContact, zelleContactType }),
+        });
 
         // ✅ Reset Wallet Balance in DB
         await Wallet.findOneAndUpdate(

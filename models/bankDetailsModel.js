@@ -6,17 +6,29 @@ const bankDetailsSchema = new mongoose.Schema({
         ref: "User",
         required: true
     },
-    accountNumber: {
+    payoutMethod: {
         type: String,
-        required: true
+        enum: ["bank", "zelle"],
+        default: "bank"
+    },
+    // Bank fields (required only for bank method)
+    accountNumber: {
+        type: String
     },
     accountHolderName: {
         type: String,
         required: true
     },
     bankName: {
+        type: String
+    },
+    // Zelle fields (required only for zelle method)
+    zelleContact: {
+        type: String
+    },
+    zelleContactType: {
         type: String,
-        required: true
+        enum: ["email", "phone"]
     },
     amount: {
         type: Number,
