@@ -63,6 +63,7 @@ const formSchema = new mongoose.Schema(
     status: { type: String, default: "pending" },
 
     submissionId: { type: Number, unique: true, sparse: true },
+    isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

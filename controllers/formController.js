@@ -224,6 +224,36 @@ export const getEstimate = async (req, res) => {
 
 export const getAllForms = async (req, res) => {
   try {
+    // Backfill submissionId for old forms that don't have one
+    const unassigned = await Form.find({ submissionId: { $exists: false } }).sort({ createdAt: 1 });
+    if (unassigned.length > 0) {
+      for (const form of unassigned) {
+        const counter = await Counter.findByIdAndUpdate(
+          { _id: 'submissionId' },
+          { $inc: { seq: 1 } },
+          { upsert: true, new: true }
+        );
+        form.submissionId = counter.seq;
+        await form.save();
+      }
+      console.log(`🔧 Backfilled ${unassigned.length} forms with submissionId`);
+    }
+
+    // Also backfill forms where submissionId is null
+    const nullIds = await Form.find({ submissionId: null }).sort({ createdAt: 1 });
+    if (nullIds.length > 0) {
+      for (const form of nullIds) {
+        const counter = await Counter.findByIdAndUpdate(
+          { _id: 'submissionId' },
+          { $inc: { seq: 1 } },
+          { upsert: true, new: true }
+        );
+        form.submissionId = counter.seq;
+        await form.save();
+      }
+      console.log(`🔧 Backfilled ${nullIds.length} null-id forms with submissionId`);
+    }
+
     const forms = await Form.find({})
       .populate("mobileId")
       .populate("userId", "name email phoneNumber")
@@ -336,10 +366,14 @@ export const updateForm = async (req, res) => {
 
 export const deleteForm = async (req, res) => {
   try {
-    const form = await Form.findByIdAndDelete(req.params.id);
+    const form = await Form.findById(req.params.id);
     if (!form) return res.status(404).json({ message: "Form not found" });
 
-    console.log("🗑️ Form deleted:", req.params.id);
+    // Soft delete — just mark as deleted, don't remove from DB
+    form.isDeleted = true;
+    await form.save();
+
+    console.log("🗑️ Form soft-deleted:", req.params.id);
 
     res.json({ message: "Form deleted successfully" });
   } catch (error) {
