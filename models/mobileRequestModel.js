@@ -8,7 +8,7 @@ const mobileRequestSchema = new mongoose.Schema({
     },
     data: {
         type: Object, // Stores the payload for CREATE/UPDATE
-        required: true
+        required: function () { return this.type !== 'DELETE'; }
     },
     mobileId: {
         type: mongoose.Schema.Types.ObjectId,

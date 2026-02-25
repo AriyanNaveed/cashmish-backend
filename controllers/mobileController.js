@@ -216,7 +216,7 @@ export const approveRequest = async (req, res) => {
     res.json({ message: "Request approved and executed" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Failed to approve request" });
+    res.status(500).json({ message: "Failed to approve request", error: error.message, stack: error.stack });
   }
 };
 
