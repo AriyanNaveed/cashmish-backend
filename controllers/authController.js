@@ -8,17 +8,17 @@ import { sendEmail, getResetPasswordTemplate } from '../utils/emailService.js';
 // Signup
 export const signup = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, permissions } = req.body;
 
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: 'User already exists' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    user = await User.create({ name, email, password: hashedPassword, role });
+    user = await User.create({ name, email, password: hashedPassword, role, permissions });
 
     const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, keys.jwtSecret, { expiresIn: '7d' });
-    res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, permissions: user.permissions } });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err });
   }
@@ -36,7 +36,7 @@ export const login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, keys.jwtSecret, { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, permissions: user.permissions } });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err });
   }
@@ -81,14 +81,22 @@ export const getUsers = async (req, res) => {
 //update user role
 export const updateUserRole = async (req, res) => {
   try {
-    const { role } = req.body;
+    const { name, email, role, permissions } = req.body;
+
+    // Build update object dynamically (so we only update fields that were provided)
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (role) updateData.role = role;
+    if (permissions) updateData.permissions = permissions;
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { role },
+      updateData,
       { new: true }
     );
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json({ id: user._id, name: user.name, email: user.email, role: user.role });
+    res.json({ id: user._id, name: user.name, email: user.email, role: user.role, permissions: user.permissions });
   }
   catch (err) {
     res.status(500).json({ message: 'Server error', error: err });

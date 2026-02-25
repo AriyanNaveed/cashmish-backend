@@ -5,7 +5,8 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: false },
     googleId: { type: String },
-    role: { type: String, enum: ['user', 'admin', 'accountant', 'superadmin'], default: 'user' },
+    role: { type: String, default: 'user' },
+    permissions: { type: [String], default: [] },
     resetPasswordToken: { type: String },
     resetPasswordExpire: { type: Date },
 }, { timestamps: true });
