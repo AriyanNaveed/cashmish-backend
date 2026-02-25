@@ -1,4 +1,5 @@
 import { Form } from "../models/formModel.js";
+import { Counter } from "../models/counterModel.js";
 import { Mobile } from "../models/mobileModel.js";
 import { User } from "../models/userModel.js";
 import { Inventory } from "../models/inventoryModel.js";
@@ -122,6 +123,13 @@ export const createForm = async (req, res) => {
     } else {
       formData.userId = null;
     }
+
+    const counter = await Counter.findByIdAndUpdate(
+      { _id: 'submissionId' },
+      { $inc: { seq: 1 } },
+      { upsert: true, new: true }
+    );
+    formData.submissionId = counter.seq;
 
     const form = await Form.create(formData);
 

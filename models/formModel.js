@@ -61,6 +61,8 @@ const formSchema = new mongoose.Schema(
     bidPrice: { type: Number, default: 0 },
 
     status: { type: String, default: "pending" },
+
+    submissionId: { type: Number, unique: true, sparse: true },
   },
   { timestamps: true }
 );
