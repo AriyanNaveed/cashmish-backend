@@ -48,7 +48,13 @@ export const createForm = async (req, res) => {
       for (const file of req.files) {
         const uploaded = await new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
-            { folder: "forms" },
+            {
+              folder: "forms",
+              quality: "auto:good",
+              fetch_format: "auto",
+              width: 1200,
+              crop: "limit"
+            },
             (err, result) => {
               if (err) reject(err);
               else resolve(result);
