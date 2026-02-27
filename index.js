@@ -42,7 +42,10 @@ const io = new Server(httpServer, {
   cors: {
     origin: '*',
     methods: ['GET', 'POST']
-  }
+  },
+  pingTimeout: 60000, // 60 seconds
+  pingInterval: 25000, // 25 seconds
+  transports: ['websocket', 'polling'] // Allow fallback for Render
 });
 
 // Initialize WebSocket setup

@@ -8,6 +8,8 @@ const messageSchema = new mongoose.Schema({
 
 const chatSessionSchema = new mongoose.Schema({
     sessionId: { type: String, required: true, unique: true },
+    userName: { type: String, default: null },
+    userEmail: { type: String, default: null },
     status: { type: String, enum: ['active', 'closed'], default: 'active' },
     messages: [messageSchema],
     lastActive: { type: Date, default: Date.now }

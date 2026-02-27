@@ -17,11 +17,28 @@ export const initializeSocket = (io) => {
         });
 
         // Handle User sending a message
-        socket.on('send_message', async ({ sessionId, text }) => {
+        socket.on('send_message', async ({ sessionId, text, userName, userEmail }) => {
             try {
                 let session = await ChatSession.findOne({ sessionId });
+
+                // If the session was resolved, archive it to start a fresh chat with the same ID
+                if (session && session.status === 'closed') {
+                    session.sessionId = `${session.sessionId}_archived_${Date.now()}`;
+                    await session.save();
+                    session = null; // force creation below
+                }
+
                 if (!session) {
-                    session = new ChatSession({ sessionId, messages: [] });
+                    session = new ChatSession({
+                        sessionId,
+                        userName: userName || null,
+                        userEmail: userEmail || null,
+                        messages: []
+                    });
+                } else if (!session.userName && userName) {
+                    // Update session with user info if they magically logged in mid-chat
+                    session.userName = userName;
+                    session.userEmail = userEmail;
                 }
 
                 const newMessage = { sender: 'user', text };
@@ -55,6 +72,12 @@ export const initializeSocket = (io) => {
             } catch (error) {
                 console.error('[Socket] Error handling admin_reply:', error);
             }
+        });
+
+        // Handle Admin actions (resolve/delete)
+        socket.on('admin_action', ({ sessionId, action }) => {
+            // Forward this to the user's specific room
+            io.to(sessionId).emit('chat_ended', { action });
         });
 
         socket.on('disconnect', () => {
