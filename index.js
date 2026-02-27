@@ -1,6 +1,10 @@
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db.js';
+import compression from 'compression';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { initializeSocket } from './socket.js';
 import passport from 'passport';
 import bodyParser from 'body-parser';
 import authRoutes from './routes/authRoutes.js';
@@ -16,9 +20,33 @@ import couponRoutes from './routes/couponRoutes.js';
 
 import reviewRoutes from './routes/reviewRoutes.js';
 import blogRoutes from './routes/blogRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Improve API performance by compressing response bodies
+app.use(compression({
+  level: 6,
+  threshold: 100 * 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Initialize WebSocket setup
+initializeSocket(io);
 
 //middleware
 app.use(bodyParser.json());
@@ -44,10 +72,11 @@ app.use("/api/bankDetails", bankDetailsRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/blogs", blogRoutes);
+app.use("/api/chat", chatRoutes);
 
 //connect to database and start server
 connectDB();
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
